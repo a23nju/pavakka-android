@@ -19,9 +19,14 @@ fun MoreScreen(authViewModel: AuthViewModel, onNavigate: (String) -> Unit) {
             row("Fasting", Icons.Filled.Refresh) { onNavigate("fasting") }
             row("Goals", Icons.Filled.Star) { onNavigate("goals") }
             row("My Foods", Icons.Filled.ShoppingCart) { onNavigate("foods") }
+            row("Set Up Profile", Icons.Filled.Person) { onNavigate("onboarding") }
             Divider()
+            row("AI Coach", Icons.Filled.Email) { onNavigate("coach") }
             row("AI Meal Plan", Icons.Filled.Create) { onNavigate("plan") }
             row("Meal Scan", Icons.Filled.Search) { onNavigate("scan") }
+            row("Log Exercise (AI)", Icons.Filled.PlayArrow) { onNavigate("exerciseAi") }
+            Divider()
+            row("Achievements", Icons.Filled.Favorite) { onNavigate("achievements") }
             row("Weekly Report", Icons.Filled.DateRange) { onNavigate("report") }
             Divider()
             row("Log Out", Icons.Filled.ExitToApp) { authViewModel.logout() }

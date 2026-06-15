@@ -1,7 +1,11 @@
 package ai.laennec.pavakka.features.scan
 
+import android.util.Base64
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -36,11 +40,14 @@ class ScanViewModel : ViewModel() {
 
     private val today: String get() = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
 
-    fun scanText(text: String) {
+    fun scanText(text: String) = run(mapOf("text" to text))
+    fun scanImage(dataUrl: String) = run(mapOf("dataUrl" to dataUrl))
+
+    private fun run(body: Map<String, String>) {
         viewModelScope.launch {
             _loading.value = true; _error.value = null; _items.value = emptyList(); _logged.value = false
             try {
-                val r = NetworkService.api.scan(mapOf("text" to text))
+                val r = NetworkService.api.scan(body)
                 _items.value = r.items
                 if (r.items.isEmpty()) _error.value = r.note.ifEmpty { "No food found." }
             } catch (_: Exception) { _error.value = "Couldn't reach the meal scanner." }
@@ -72,20 +79,34 @@ fun ScanScreen(vm: ScanViewModel = viewModel()) {
     var text by remember { mutableStateOf("") }
     var meal by remember { mutableStateOf("lunch") }
     val meals = listOf("breakfast", "lunch", "dinner", "snack")
+    val context = LocalContext.current
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri ?: return@rememberLauncherForActivityResult
+        val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+        if (bytes != null) {
+            val b64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
+            vm.scanImage("data:image/jpeg;base64,$b64")
+        }
+    }
 
     Scaffold(topBar = { TopAppBar(title = { Text("Meal Scan") }) }) { padding ->
         Column(
             modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("Describe your meal — AI estimates the nutrition.", color = Color.Gray, fontSize = 14.sp)
+            Text("Describe your meal or pick a photo — AI estimates the nutrition.", color = Color.Gray, fontSize = 14.sp)
             OutlinedTextField(text, { text = it }, label = { Text("e.g. 2 idli, sambar, coffee") },
                 modifier = Modifier.fillMaxWidth())
-            Button(onClick = { vm.scanText(text) }, enabled = text.isNotBlank() && !loading,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = BrandGreen)) {
-                if (loading) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
-                else Text("Scan")
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = { vm.scanText(text) }, enabled = text.isNotBlank() && !loading,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandGreen)) {
+                    if (loading) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
+                    else Text("Scan Text")
+                }
+                OutlinedButton(onClick = { picker.launch("image/*") }, enabled = !loading, modifier = Modifier.weight(1f)) {
+                    Text("Photo")
+                }
             }
             error?.let { Text(it, color = MaterialTheme.colorScheme.error, fontSize = 13.sp) }
 

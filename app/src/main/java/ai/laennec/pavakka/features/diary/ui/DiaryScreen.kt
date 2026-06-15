@@ -7,6 +7,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,17 +23,31 @@ import ai.laennec.pavakka.core.models.FoodItem
 import ai.laennec.pavakka.core.ui.theme.BrandGreen
 import ai.laennec.pavakka.features.diary.viewmodel.DiaryViewModel
 
-// Display label -> API meal key
 private val MEALS = listOf("Breakfast" to "breakfast", "Lunch" to "lunch", "Dinner" to "dinner", "Snacks" to "snack")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DiaryScreen(diaryViewModel: DiaryViewModel = viewModel()) {
     val entries by diaryViewModel.entries.collectAsState()
+    val selectedDate by diaryViewModel.selectedDate.collectAsState()
     var showSearch by remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Food Diary") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Diary · ${diaryViewModel.dateLabel}") },
+                navigationIcon = {
+                    IconButton(onClick = { diaryViewModel.changeDay(-1) }) {
+                        Icon(Icons.Filled.KeyboardArrowLeft, "Previous day")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { diaryViewModel.changeDay(1) }) {
+                        Icon(Icons.Filled.KeyboardArrowRight, "Next day")
+                    }
+                }
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = { showSearch = true }, containerColor = BrandGreen) {
                 Icon(Icons.Filled.Add, contentDescription = "Add food", tint = Color.White)
@@ -57,12 +74,22 @@ fun DiaryScreen(diaryViewModel: DiaryViewModel = viewModel()) {
                         } else {
                             mealEntries.forEach { entry ->
                                 Divider(modifier = Modifier.padding(vertical = 6.dp))
-                                Row {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(entry.foodName, modifier = Modifier.weight(1f))
                                     Text("${entry.calories} cal", color = Color.Gray, fontSize = 13.sp)
+                                    IconButton(onClick = { diaryViewModel.deleteEntry(entry.id) }, modifier = Modifier.size(32.dp)) {
+                                        Icon(Icons.Filled.Delete, "Delete", tint = Color.Gray, modifier = Modifier.size(18.dp))
+                                    }
                                 }
                             }
                         }
+                    }
+                }
+            }
+            if (entries.isEmpty()) {
+                item {
+                    TextButton(onClick = { diaryViewModel.copyYesterday() }) {
+                        Text("📋 Copy yesterday's food", color = BrandGreen)
                     }
                 }
             }
@@ -85,7 +112,9 @@ private fun FoodSearchDialog(viewModel: DiaryViewModel, onDismiss: () -> Unit, o
     var query by remember { mutableStateOf("") }
     var meal by remember { mutableStateOf("breakfast") }
     val results by viewModel.searchResults.collectAsState()
+    val recent by viewModel.recentFoods.collectAsState()
     val isSearching by viewModel.isSearching.collectAsState()
+    val shown = if (query.isBlank()) recent else results
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -109,8 +138,9 @@ private fun FoodSearchDialog(viewModel: DiaryViewModel, onDismiss: () -> Unit, o
                 )
                 Spacer(Modifier.height(8.dp))
                 if (isSearching) CircularProgressIndicator(color = BrandGreen, modifier = Modifier.size(24.dp))
+                if (query.isBlank() && recent.isNotEmpty()) Text("Recent", fontSize = 12.sp, color = Color.Gray)
                 LazyColumn {
-                    items(results) { food ->
+                    items(shown) { food ->
                         Column(modifier = Modifier.fillMaxWidth().clickable { onLog(food, meal) }.padding(vertical = 8.dp)) {
                             Text(food.name, fontWeight = FontWeight.Medium)
                             Text("${food.calories} kcal / ${food.servingSize.toInt()}${food.servingUnit}" +

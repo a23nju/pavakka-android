@@ -24,6 +24,15 @@ class DashboardViewModel : ViewModel() {
     private val _waterGlasses = MutableStateFlow(0)
     val waterGlasses: StateFlow<Int> = _waterGlasses
 
+    private val _streak = MutableStateFlow(0)
+    val streak: StateFlow<Int> = _streak
+
+    private val _weeklyBalance = MutableStateFlow(0)
+    val weeklyBalance: StateFlow<Int> = _weeklyBalance
+
+    private val _todayTarget = MutableStateFlow(0)
+    val todayTarget: StateFlow<Int> = _todayTarget
+
     private val today: String
         get() = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
 
@@ -37,6 +46,12 @@ class DashboardViewModel : ViewModel() {
                 _caloriesBurned.value = s.caloriesBurned
                 _calorieGoal.value = s.calorieGoal
                 _waterGlasses.value = s.waterGlasses
+            } catch (_: Exception) {}
+            try { _streak.value = NetworkService.api.getStreak().streak } catch (_: Exception) {}
+            try {
+                val b = NetworkService.api.getCalorieBank()
+                _weeklyBalance.value = b.weeklyBalance
+                _todayTarget.value = b.todayTarget
             } catch (_: Exception) {}
         }
     }

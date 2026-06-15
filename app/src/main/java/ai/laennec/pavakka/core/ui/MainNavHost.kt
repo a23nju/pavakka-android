@@ -9,8 +9,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import ai.laennec.pavakka.features.achievements.AchievementsScreen
 import ai.laennec.pavakka.features.auth.viewmodel.AuthViewModel
+import ai.laennec.pavakka.features.coach.CoachScreen
 import ai.laennec.pavakka.features.dashboard.ui.DashboardScreen
+import ai.laennec.pavakka.features.onboarding.OnboardingScreen
+import ai.laennec.pavakka.features.workout.ui.ExerciseAIScreen
 import ai.laennec.pavakka.features.diary.ui.DiaryScreen
 import ai.laennec.pavakka.features.fasting.ui.FastingScreen
 import ai.laennec.pavakka.features.foods.FoodsScreen
@@ -74,6 +78,10 @@ fun MainNavHost(authViewModel: AuthViewModel) {
             composable("plan") { PlanScreen() }
             composable("scan") { ScanScreen() }
             composable("report") { ReportScreen() }
+            composable("coach") { CoachScreen() }
+            composable("achievements") { AchievementsScreen() }
+            composable("onboarding") { OnboardingScreen() }
+            composable("exerciseAi") { ExerciseAIScreen() }
         }
     }
 }

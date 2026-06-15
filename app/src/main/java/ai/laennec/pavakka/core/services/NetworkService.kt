@@ -84,6 +84,38 @@ interface PavakkaApi {
     // Weekly report
     @GET("report")
     suspend fun getReport(): WeekReport
+
+    // Streaks + badges
+    @GET("streak")
+    suspend fun getStreak(): StreakResponse
+
+    // AI coach
+    @POST("coach")
+    suspend fun coach(@Body body: CoachRequest): CoachReply
+
+    // Recent foods (one-tap re-log)
+    @GET("diary/recent")
+    suspend fun getRecentFoods(): List<FoodItem>
+
+    // Copy yesterday's food
+    @POST("diary/copy")
+    suspend fun copyDay(@Body body: Map<String, String>): CopyResponse
+
+    // Edit a logged portion
+    @PATCH("diary/entries")
+    suspend fun editEntry(@Body body: EditEntryRequest): DiaryEntry
+
+    // Weekly calorie bank
+    @GET("calorie-bank")
+    suspend fun getCalorieBank(): CalorieBank
+
+    // Onboarding
+    @POST("onboarding")
+    suspend fun onboard(@Body body: OnboardingRequest): OnboardingResult
+
+    // AI exercise estimate
+    @POST("exercise/ai")
+    suspend fun estimateExercise(@Body body: Map<String, String>): ExerciseAIResponse
 }
 
 object NetworkService {

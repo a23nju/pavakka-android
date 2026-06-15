@@ -122,3 +122,37 @@ data class WeekReport(
     val dailyCalories: List<DailyCalories>,
     val summary: String
 )
+
+// --- Streaks + badges ---
+data class Badge(val icon: String, val title: String, val desc: String, val earned: Boolean)
+data class StreakResponse(val streak: Int, val badges: List<Badge>)
+
+// --- AI coach ---
+data class CoachTurn(val role: String, val text: String)
+data class CoachRequest(val history: List<CoachTurn>, val message: String)
+data class CoachReply(val reply: String)
+
+// --- Diary extras ---
+data class CopyResponse(val copied: Int)
+data class EditEntryRequest(val id: String, val quantity: Double)
+
+// --- Calorie bank ---
+data class BankDay(val date: String, val eaten: Int, val goal: Int)
+data class CalorieBank(
+    val dailyGoal: Int,
+    val weeklyBalance: Int,
+    val todayTarget: Int,
+    val todayEaten: Int,
+    val days: List<BankDay>
+)
+
+// --- Onboarding ---
+data class OnboardingRequest(
+    val name: String, val sex: String, val age: Int, val heightCm: Double,
+    val weightKg: Double, val goalWeightKg: Double?, val activity: String, val pace: String
+)
+data class OnboardingResult(val onboarded: Boolean, val calories: Int? = null)
+
+// --- AI exercise estimate ---
+data class ExerciseEstimate(val name: String, val minutes: Int, val caloriesBurned: Int)
+data class ExerciseAIResponse(val items: List<ExerciseEstimate>, val note: String)

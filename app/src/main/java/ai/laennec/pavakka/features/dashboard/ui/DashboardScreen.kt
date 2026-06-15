@@ -30,6 +30,9 @@ fun DashboardScreen(authViewModel: AuthViewModel, dashboardViewModel: DashboardV
     val calorieGoal by dashboardViewModel.calorieGoal.collectAsState()
     val caloriesBurned by dashboardViewModel.caloriesBurned.collectAsState()
     val waterGlasses by dashboardViewModel.waterGlasses.collectAsState()
+    val streak by dashboardViewModel.streak.collectAsState()
+    val weeklyBalance by dashboardViewModel.weeklyBalance.collectAsState()
+    val todayTarget by dashboardViewModel.todayTarget.collectAsState()
 
     Scaffold(
         topBar = {
@@ -51,7 +54,33 @@ fun DashboardScreen(authViewModel: AuthViewModel, dashboardViewModel: DashboardV
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Hello, ${user?.name ?: "there"} 👋", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Hello, ${user?.name ?: "there"} 👋", fontSize = 22.sp, fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f))
+                if (streak > 0) {
+                    Surface(color = BrandGreen.copy(alpha = 0.15f), shape = RoundedCornerShape(20.dp)) {
+                        Text("🔥 $streak", fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp))
+                    }
+                }
+            }
+
+            if (todayTarget != 0) {
+                Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+                    Row(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Weekly Bank", fontSize = 12.sp, color = Color.Gray)
+                            Text("${if (weeklyBalance >= 0) "+" else ""}$weeklyBalance kcal",
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (weeklyBalance >= 0) BrandGreen else Color(0xFFFF6B35))
+                        }
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text("Today's target", fontSize = 12.sp, color = Color.Gray)
+                            Text("$todayTarget kcal", fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+            }
 
             // Calorie Ring
             Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
