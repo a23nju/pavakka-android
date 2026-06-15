@@ -1,0 +1,6 @@
+
+# Local build tooling
+local.properties
+.gradle/
+build/
+app/build/
