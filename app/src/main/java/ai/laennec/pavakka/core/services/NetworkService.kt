@@ -29,7 +29,7 @@ interface PavakkaApi {
 
 object NetworkService {
     // Replace with your Vercel URL once deployed
-    private const val BASE_URL = "https://pavakka.vercel.app/api/"
+    private const val BASE_URL = "https://pavakka-a23njus-projects.vercel.app/api/"
 
     private val client = OkHttpClient.Builder()
         .addInterceptor(HttpLoggingInterceptor().apply {
