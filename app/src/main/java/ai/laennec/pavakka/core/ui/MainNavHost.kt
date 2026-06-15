@@ -13,39 +13,48 @@ import ai.laennec.pavakka.features.auth.viewmodel.AuthViewModel
 import ai.laennec.pavakka.features.dashboard.ui.DashboardScreen
 import ai.laennec.pavakka.features.diary.ui.DiaryScreen
 import ai.laennec.pavakka.features.fasting.ui.FastingScreen
+import ai.laennec.pavakka.features.foods.FoodsScreen
+import ai.laennec.pavakka.features.goals.GoalsScreen
+import ai.laennec.pavakka.features.more.MoreScreen
+import ai.laennec.pavakka.features.plan.PlanScreen
 import ai.laennec.pavakka.features.progress.ui.ProgressScreen
+import ai.laennec.pavakka.features.report.ReportScreen
+import ai.laennec.pavakka.features.scan.ScanScreen
 import ai.laennec.pavakka.features.workout.ui.WorkoutScreen
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
     object Dashboard : Screen("dashboard", "Dashboard", Icons.Filled.Home)
     object Diary : Screen("diary", "Diary", Icons.Filled.DateRange)
     object Progress : Screen("progress", "Progress", Icons.Filled.Star)
-    object Fasting : Screen("fasting", "Fasting", Icons.Filled.Refresh)
     object Workout : Screen("workout", "Workout", Icons.Filled.PlayArrow)
+    object More : Screen("more", "More", Icons.Filled.Menu)
 }
 
 @Composable
 fun MainNavHost(authViewModel: AuthViewModel) {
     val navController = rememberNavController()
-    val tabs = listOf(Screen.Dashboard, Screen.Diary, Screen.Progress, Screen.Fasting, Screen.Workout)
+    val tabs = listOf(Screen.Dashboard, Screen.Diary, Screen.Progress, Screen.Workout, Screen.More)
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+    val showBar = currentRoute in tabs.map { it.route }
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                tabs.forEach { screen ->
-                    NavigationBarItem(
-                        icon = { Icon(screen.icon, contentDescription = screen.label) },
-                        label = { Text(screen.label) },
-                        selected = currentRoute == screen.route,
-                        onClick = {
-                            navController.navigate(screen.route) {
-                                popUpTo(navController.graph.startDestinationId) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
+            if (showBar) {
+                NavigationBar {
+                    tabs.forEach { screen ->
+                        NavigationBarItem(
+                            icon = { Icon(screen.icon, contentDescription = screen.label) },
+                            label = { Text(screen.label) },
+                            selected = currentRoute == screen.route,
+                            onClick = {
+                                navController.navigate(screen.route) {
+                                    popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }
@@ -54,8 +63,17 @@ fun MainNavHost(authViewModel: AuthViewModel) {
             composable(Screen.Dashboard.route) { DashboardScreen(authViewModel) }
             composable(Screen.Diary.route) { DiaryScreen() }
             composable(Screen.Progress.route) { ProgressScreen() }
-            composable(Screen.Fasting.route) { FastingScreen() }
             composable(Screen.Workout.route) { WorkoutScreen() }
+            composable(Screen.More.route) {
+                MoreScreen(authViewModel) { route -> navController.navigate(route) }
+            }
+            // Sub-routes reachable from More
+            composable("fasting") { FastingScreen() }
+            composable("goals") { GoalsScreen() }
+            composable("foods") { FoodsScreen() }
+            composable("plan") { PlanScreen() }
+            composable("scan") { ScanScreen() }
+            composable("report") { ReportScreen() }
         }
     }
 }

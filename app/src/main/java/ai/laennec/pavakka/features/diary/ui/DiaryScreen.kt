@@ -1,5 +1,6 @@
 package ai.laennec.pavakka.features.diary.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -15,19 +16,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import ai.laennec.pavakka.core.models.FoodItem
 import ai.laennec.pavakka.core.ui.theme.BrandGreen
 import ai.laennec.pavakka.features.diary.viewmodel.DiaryViewModel
+
+// Display label -> API meal key
+private val MEALS = listOf("Breakfast" to "breakfast", "Lunch" to "lunch", "Dinner" to "dinner", "Snacks" to "snack")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DiaryScreen(diaryViewModel: DiaryViewModel = viewModel()) {
-    val meals = listOf("Breakfast", "Lunch", "Dinner", "Snacks")
     val entries by diaryViewModel.entries.collectAsState()
+    var showSearch by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Food Diary") }) },
         floatingActionButton = {
-            FloatingActionButton(onClick = { /* open search */ }, containerColor = BrandGreen) {
+            FloatingActionButton(onClick = { showSearch = true }, containerColor = BrandGreen) {
                 Icon(Icons.Filled.Add, contentDescription = "Add food", tint = Color.White)
             }
         }
@@ -37,14 +42,14 @@ fun DiaryScreen(diaryViewModel: DiaryViewModel = viewModel()) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item { Spacer(Modifier.height(4.dp)) }
-            items(meals) { meal ->
-                val mealEntries = entries.filter { it.meal == meal }
+            items(MEALS) { (label, key) ->
+                val mealEntries = entries.filter { it.meal.equals(key, ignoreCase = true) }
                 val mealCalories = mealEntries.sumOf { it.calories }
                 Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(meal, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, modifier = Modifier.weight(1f))
-                            if (mealCalories > 0) Text("${mealCalories} cal", color = Color.Gray, fontSize = 13.sp)
+                            Text(label, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, modifier = Modifier.weight(1f))
+                            if (mealCalories > 0) Text("$mealCalories cal", color = Color.Gray, fontSize = 13.sp)
                         }
                         if (mealEntries.isEmpty()) {
                             Spacer(Modifier.height(8.dp))
@@ -64,4 +69,57 @@ fun DiaryScreen(diaryViewModel: DiaryViewModel = viewModel()) {
             item { Spacer(Modifier.height(80.dp)) }
         }
     }
+
+    if (showSearch) {
+        FoodSearchDialog(
+            viewModel = diaryViewModel,
+            onDismiss = { showSearch = false },
+            onLog = { food, meal -> diaryViewModel.logFood(food, meal); showSearch = false }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FoodSearchDialog(viewModel: DiaryViewModel, onDismiss: () -> Unit, onLog: (FoodItem, String) -> Unit) {
+    var query by remember { mutableStateOf("") }
+    var meal by remember { mutableStateOf("breakfast") }
+    val results by viewModel.searchResults.collectAsState()
+    val isSearching by viewModel.isSearching.collectAsState()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } },
+        title = { Text("Add food") },
+        text = {
+            Column(modifier = Modifier.heightIn(max = 460.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    MEALS.forEach { (label, key) ->
+                        FilterChip(selected = meal == key, onClick = { meal = key },
+                            label = { Text(label, fontSize = 11.sp) },
+                            colors = FilterChipDefaults.filterChipColors(selectedContainerColor = BrandGreen))
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it; viewModel.search(it) },
+                    label = { Text("Search foods") },
+                    singleLine = true, modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(8.dp))
+                if (isSearching) CircularProgressIndicator(color = BrandGreen, modifier = Modifier.size(24.dp))
+                LazyColumn {
+                    items(results) { food ->
+                        Column(modifier = Modifier.fillMaxWidth().clickable { onLog(food, meal) }.padding(vertical = 8.dp)) {
+                            Text(food.name, fontWeight = FontWeight.Medium)
+                            Text("${food.calories} kcal / ${food.servingSize.toInt()}${food.servingUnit}" +
+                                (food.brand?.let { " · $it" } ?: ""), fontSize = 12.sp, color = Color.Gray)
+                        }
+                        Divider()
+                    }
+                }
+            }
+        }
+    )
 }

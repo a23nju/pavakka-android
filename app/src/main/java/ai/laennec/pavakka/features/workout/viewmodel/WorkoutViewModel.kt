@@ -2,11 +2,16 @@ package ai.laennec.pavakka.features.workout.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import ai.laennec.pavakka.core.models.ExerciseRequest
+import ai.laennec.pavakka.core.services.NetworkService
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlin.math.roundToInt
 
 class WorkoutViewModel : ViewModel() {
@@ -29,6 +34,9 @@ class WorkoutViewModel : ViewModel() {
 
     private var timerJob: Job? = null
 
+    private val today: String
+        get() = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+
     fun start() {
         _isRunning.value = true
         timerJob = viewModelScope.launch {
@@ -45,6 +53,15 @@ class WorkoutViewModel : ViewModel() {
     fun stop() {
         _isRunning.value = false
         timerJob?.cancel()
+        val burned = _caloriesBurned.value
+        val minutes = _elapsedSeconds.value / 60.0
+        val name = _selectedExercise.value
+        if (burned > 0) {
+            viewModelScope.launch {
+                try { NetworkService.api.logExercise(ExerciseRequest(name, burned, minutes, today)) }
+                catch (_: Exception) {}
+            }
+        }
         _elapsedSeconds.value = 0
         _caloriesBurned.value = 0
     }

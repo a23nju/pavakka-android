@@ -1,8 +1,15 @@
 package ai.laennec.pavakka.features.dashboard.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import ai.laennec.pavakka.core.models.WaterRequest
+import ai.laennec.pavakka.core.services.NetworkService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class DashboardViewModel : ViewModel() {
     private val _caloriesEaten = MutableStateFlow(0)
@@ -17,6 +24,32 @@ class DashboardViewModel : ViewModel() {
     private val _waterGlasses = MutableStateFlow(0)
     val waterGlasses: StateFlow<Int> = _waterGlasses
 
-    fun addWater() { if (_waterGlasses.value < 8) _waterGlasses.value++ }
-    fun removeWater() { if (_waterGlasses.value > 0) _waterGlasses.value-- }
+    private val today: String
+        get() = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+
+    init { load() }
+
+    fun load() {
+        viewModelScope.launch {
+            try {
+                val s = NetworkService.api.getDashboard(today)
+                _caloriesEaten.value = s.caloriesEaten
+                _caloriesBurned.value = s.caloriesBurned
+                _calorieGoal.value = s.calorieGoal
+                _waterGlasses.value = s.waterGlasses
+            } catch (_: Exception) {}
+        }
+    }
+
+    fun addWater() = changeWater(1)
+    fun removeWater() = changeWater(-1)
+
+    private fun changeWater(delta: Int) {
+        viewModelScope.launch {
+            try {
+                val r = NetworkService.api.changeWater(WaterRequest(today, delta))
+                _waterGlasses.value = r.glasses
+            } catch (_: Exception) {}
+        }
+    }
 }
