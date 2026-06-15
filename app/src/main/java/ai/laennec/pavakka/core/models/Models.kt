@@ -2,12 +2,13 @@ package ai.laennec.pavakka.core.models
 
 data class User(
     val id: String,
-    val name: String,
+    val name: String?,
     val email: String,
-    val goalCalories: Int = 2000,
-    val goalProtein: Int = 150,
-    val goalCarbs: Int = 250,
-    val goalFat: Int = 65,
+    // Auth endpoints return only id/name/email, so the rest are nullable.
+    val goalCalories: Int? = null,
+    val goalProtein: Int? = null,
+    val goalCarbs: Int? = null,
+    val goalFat: Int? = null,
     val weightKg: Double? = null,
     val goalWeightKg: Double? = null
 )
