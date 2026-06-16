@@ -1,6 +1,8 @@
 package ai.laennec.pavakka.features.dashboard.ui
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -44,6 +46,12 @@ fun DashboardScreen(
     val streak by dashboardViewModel.streak.collectAsState()
     val weeklyBalance by dashboardViewModel.weeklyBalance.collectAsState()
     val todayTarget by dashboardViewModel.todayTarget.collectAsState()
+    val protein by dashboardViewModel.protein.collectAsState()
+    val carbs by dashboardViewModel.carbs.collectAsState()
+    val fat by dashboardViewModel.fat.collectAsState()
+    val proteinGoal by dashboardViewModel.proteinGoal.collectAsState()
+    val carbsGoal by dashboardViewModel.carbsGoal.collectAsState()
+    val fatGoal by dashboardViewModel.fatGoal.collectAsState()
 
     Scaffold(
         topBar = {
@@ -109,6 +117,18 @@ fun DashboardScreen(
                         CalorieStat("Goal", calorieGoal)
                         CalorieStat("Burned", caloriesBurned)
                     }
+                }
+            }
+
+            // Macros (protein / carbs / fat) — matches web + iOS
+            Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    MacroBar("Protein", protein, proteinGoal, Color(0xFF3B82F6))
+                    MacroBar("Carbs", carbs, carbsGoal, Color(0xFFF59E0B))
+                    MacroBar("Fat", fat, fatGoal, Color(0xFFEAB308))
                 }
             }
 
@@ -199,5 +219,23 @@ fun CalorieStat(label: String, value: Int) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text("$value", fontWeight = FontWeight.SemiBold)
         Text(label, fontSize = 12.sp, color = Color.Gray)
+    }
+}
+
+@Composable
+fun MacroBar(label: String, value: Double, goal: Int, color: Color) {
+    val progress = (value.toFloat() / goal.coerceAtLeast(1)).coerceIn(0f, 1f)
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(label, fontSize = 12.sp, color = Color.Gray)
+        Spacer(Modifier.height(6.dp))
+        Box(
+            modifier = Modifier.width(12.dp).height(60.dp),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            Box(modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(6.dp)).background(color.copy(alpha = 0.2f)))
+            Box(modifier = Modifier.width(12.dp).fillMaxHeight(progress).clip(RoundedCornerShape(6.dp)).background(color))
+        }
+        Spacer(Modifier.height(6.dp))
+        Text("${value.toInt()} / ${goal}g", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
     }
 }

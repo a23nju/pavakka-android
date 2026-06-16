@@ -33,6 +33,19 @@ class DashboardViewModel : ViewModel() {
     private val _todayTarget = MutableStateFlow(0)
     val todayTarget: StateFlow<Int> = _todayTarget
 
+    private val _protein = MutableStateFlow(0.0)
+    val protein: StateFlow<Double> = _protein
+    private val _carbs = MutableStateFlow(0.0)
+    val carbs: StateFlow<Double> = _carbs
+    private val _fat = MutableStateFlow(0.0)
+    val fat: StateFlow<Double> = _fat
+    private val _proteinGoal = MutableStateFlow(150)
+    val proteinGoal: StateFlow<Int> = _proteinGoal
+    private val _carbsGoal = MutableStateFlow(250)
+    val carbsGoal: StateFlow<Int> = _carbsGoal
+    private val _fatGoal = MutableStateFlow(65)
+    val fatGoal: StateFlow<Int> = _fatGoal
+
     private val today: String
         get() = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
 
@@ -46,6 +59,12 @@ class DashboardViewModel : ViewModel() {
                 _caloriesBurned.value = s.caloriesBurned
                 _calorieGoal.value = s.calorieGoal
                 _waterGlasses.value = s.waterGlasses
+                _protein.value = s.protein
+                _carbs.value = s.carbs
+                _fat.value = s.fat
+                _proteinGoal.value = s.proteinGoal
+                _carbsGoal.value = s.carbsGoal
+                _fatGoal.value = s.fatGoal
             } catch (_: Exception) {}
             try { _streak.value = NetworkService.api.getStreak().streak } catch (_: Exception) {}
             try {

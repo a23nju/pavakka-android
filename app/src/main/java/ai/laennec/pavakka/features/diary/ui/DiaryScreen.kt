@@ -25,6 +25,10 @@ import ai.laennec.pavakka.features.diary.viewmodel.DiaryViewModel
 
 private val MEALS = listOf("Breakfast" to "breakfast", "Lunch" to "lunch", "Dinner" to "dinner", "Snacks" to "snack")
 
+// Show whole numbers without a trailing ".0" (e.g. 1×, 1.5×).
+private fun formatQty(q: Double): String =
+    if (q == q.toLong().toDouble()) q.toLong().toString() else String.format("%.2f", q).trimEnd('0').trimEnd('.')
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DiaryScreen(diaryViewModel: DiaryViewModel = viewModel()) {
@@ -75,8 +79,16 @@ fun DiaryScreen(diaryViewModel: DiaryViewModel = viewModel()) {
                             mealEntries.forEach { entry ->
                                 Divider(modifier = Modifier.padding(vertical = 6.dp))
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(entry.foodName, modifier = Modifier.weight(1f))
-                                    Text("${entry.calories} cal", color = Color.Gray, fontSize = 13.sp)
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(entry.foodName)
+                                        Text("${entry.calories} cal · ${formatQty(entry.quantity)}× serving", color = Color.Gray, fontSize = 12.sp)
+                                    }
+                                    IconButton(onClick = { diaryViewModel.editEntry(entry.id, entry.quantity - 0.5) }, modifier = Modifier.size(32.dp)) {
+                                        Text("−", fontSize = 20.sp, color = BrandGreen)
+                                    }
+                                    IconButton(onClick = { diaryViewModel.editEntry(entry.id, entry.quantity + 0.5) }, modifier = Modifier.size(32.dp)) {
+                                        Text("+", fontSize = 18.sp, color = BrandGreen)
+                                    }
                                     IconButton(onClick = { diaryViewModel.deleteEntry(entry.id) }, modifier = Modifier.size(32.dp)) {
                                         Icon(Icons.Filled.Delete, "Delete", tint = Color.Gray, modifier = Modifier.size(18.dp))
                                     }
