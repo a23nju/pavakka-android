@@ -36,6 +36,9 @@ fun DiaryScreen(diaryViewModel: DiaryViewModel = viewModel()) {
     val selectedDate by diaryViewModel.selectedDate.collectAsState()
     var showSearch by remember { mutableStateOf(false) }
 
+    // Reload whenever the Diary tab is shown so changes made elsewhere reflect.
+    LaunchedEffect(Unit) { diaryViewModel.load() }
+
     Scaffold(
         topBar = {
             TopAppBar(

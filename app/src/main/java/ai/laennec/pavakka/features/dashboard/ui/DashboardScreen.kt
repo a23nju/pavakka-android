@@ -10,6 +10,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,6 +53,11 @@ fun DashboardScreen(
     val proteinGoal by dashboardViewModel.proteinGoal.collectAsState()
     val carbsGoal by dashboardViewModel.carbsGoal.collectAsState()
     val fatGoal by dashboardViewModel.fatGoal.collectAsState()
+    val weekly by dashboardViewModel.weekly.collectAsState()
+    val isRefreshing by dashboardViewModel.isRefreshing.collectAsState()
+
+    // Refresh whenever the Dashboard tab is shown so food logged elsewhere reflects here.
+    LaunchedEffect(Unit) { dashboardViewModel.load(); diaryViewModel.load() }
 
     Scaffold(
         topBar = {
@@ -65,11 +71,15 @@ fun DashboardScreen(
             )
         }
     ) { padding ->
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = { dashboardViewModel.refresh(); diaryViewModel.load() },
+            modifier = Modifier.padding(padding)
+        ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(padding)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -178,6 +188,18 @@ fun DashboardScreen(
                     }
                 }
             }
+
+            // Weekly calories — last 7 days vs goal
+            if (weekly.isNotEmpty()) {
+                Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("This week", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                        Spacer(Modifier.height(12.dp))
+                        WeeklyChart(weekly.map { it.calories }, calorieGoal)
+                    }
+                }
+            }
+        }
         }
     }
 
@@ -237,5 +259,32 @@ fun MacroBar(label: String, value: Double, goal: Int, color: Color) {
         }
         Spacer(Modifier.height(6.dp))
         Text("${value.toInt()} / ${goal}g", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
+fun WeeklyChart(days: List<Int>, goal: Int) {
+    val labels = listOf("M", "T", "W", "T", "F", "S", "S")
+    val maxVal = (days.maxOrNull() ?: 0).coerceAtLeast(goal).coerceAtLeast(1)
+    Row(
+        modifier = Modifier.fillMaxWidth().height(110.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Bottom
+    ) {
+        days.forEachIndexed { i, cals ->
+            val frac = (cals.toFloat() / maxVal).coerceIn(0f, 1f)
+            val over = cals > goal
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
+                Text(if (cals > 0) "$cals" else "", fontSize = 9.sp, color = Color.Gray)
+                Spacer(Modifier.height(2.dp))
+                Box(
+                    modifier = Modifier.width(16.dp).fillMaxHeight(maxOf(frac, 0.02f))
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(if (over) Color(0xFFEF4444) else BrandGreen)
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(labels.getOrElse(i) { "" }, fontSize = 11.sp, color = Color.Gray)
+            }
+        }
     }
 }

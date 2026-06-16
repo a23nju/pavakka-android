@@ -2,6 +2,7 @@ package ai.laennec.pavakka.features.dashboard.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import ai.laennec.pavakka.core.models.DailyCalories
 import ai.laennec.pavakka.core.models.WaterRequest
 import ai.laennec.pavakka.core.services.NetworkService
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,6 +47,12 @@ class DashboardViewModel : ViewModel() {
     private val _fatGoal = MutableStateFlow(65)
     val fatGoal: StateFlow<Int> = _fatGoal
 
+    private val _weekly = MutableStateFlow<List<DailyCalories>>(emptyList())
+    val weekly: StateFlow<List<DailyCalories>> = _weekly
+
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing
+
     private val today: String
         get() = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
 
@@ -72,6 +79,16 @@ class DashboardViewModel : ViewModel() {
                 _weeklyBalance.value = b.weeklyBalance
                 _todayTarget.value = b.todayTarget
             } catch (_: Exception) {}
+            try { _weekly.value = NetworkService.api.getReport().dailyCalories } catch (_: Exception) {}
+        }
+    }
+
+    // Pull-to-refresh: reload everything and toggle the spinner.
+    fun refresh() {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            load()
+            _isRefreshing.value = false
         }
     }
 
