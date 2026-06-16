@@ -21,7 +21,7 @@ fun MoreScreen(authViewModel: AuthViewModel, onNavigate: (String) -> Unit) {
             row("My Foods", Icons.Filled.ShoppingCart) { onNavigate("foods") }
             row("Set Up Profile", Icons.Filled.Person) { onNavigate("onboarding") }
             Divider()
-            row("AI Coach", Icons.Filled.Email) { onNavigate("coach") }
+            rowEmoji("AI Coach", "💬") { onNavigate("coach") }
             row("AI Meal Plan", Icons.Filled.Create) { onNavigate("plan") }
             row("Meal Scan", Icons.Filled.Search) { onNavigate("scan") }
             row("Log Exercise (AI)", Icons.Filled.PlayArrow) { onNavigate("exerciseAi") }
@@ -39,6 +39,15 @@ private fun row(label: String, icon: ImageVector, onClick: () -> Unit) {
     ListItem(
         headlineContent = { Text(label) },
         leadingContent = { Icon(icon, contentDescription = label) },
+        modifier = Modifier.clickable { onClick() }
+    )
+}
+
+@Composable
+private fun rowEmoji(label: String, emoji: String, onClick: () -> Unit) {
+    ListItem(
+        headlineContent = { Text(label) },
+        leadingContent = { Text(emoji) },
         modifier = Modifier.clickable { onClick() }
     )
 }

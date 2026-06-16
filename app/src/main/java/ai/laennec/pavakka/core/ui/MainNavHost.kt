@@ -42,6 +42,20 @@ fun MainNavHost(authViewModel: AuthViewModel) {
     val showBar = currentRoute in tabs.map { it.route }
 
     Scaffold(
+        floatingActionButton = {
+            // Floating AI Coach chat bubble — shown on tabs that don't have their own FAB.
+            val noOwnFab = currentRoute == Screen.Dashboard.route ||
+                currentRoute == Screen.Progress.route ||
+                currentRoute == Screen.More.route
+            if (showBar && noOwnFab) {
+                FloatingActionButton(
+                    onClick = { navController.navigate("coach") },
+                    containerColor = ai.laennec.pavakka.core.ui.theme.BrandGreen
+                ) {
+                    androidx.compose.material3.Text("💬", fontSize = androidx.compose.ui.unit.TextUnit(22f, androidx.compose.ui.unit.TextUnitType.Sp))
+                }
+            }
+        },
         bottomBar = {
             if (showBar) {
                 NavigationBar {
