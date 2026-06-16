@@ -22,6 +22,8 @@ import kotlinx.coroutines.launch
 class OnboardingViewModel : ViewModel() {
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message
+    private val _done = MutableStateFlow(false)
+    val done: StateFlow<Boolean> = _done
 
     fun save(name: String, sex: String, age: Int?, height: Double?, weight: Double?, goalWeight: Double?, activity: String, pace: String) {
         if (age == null || height == null || weight == null) { _message.value = "Fill in age, height and weight."; return }
@@ -29,6 +31,7 @@ class OnboardingViewModel : ViewModel() {
             try {
                 val r = NetworkService.api.onboard(OnboardingRequest(name, sex, age, height, weight, goalWeight, activity, pace))
                 _message.value = "Saved! Daily goal: ${r.calories ?: "?"} kcal"
+                _done.value = true
             } catch (_: Exception) { _message.value = "Couldn't save your profile." }
         }
     }
@@ -36,7 +39,10 @@ class OnboardingViewModel : ViewModel() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OnboardingScreen(vm: OnboardingViewModel = viewModel()) {
+fun OnboardingScreen(vm: OnboardingViewModel = viewModel(), onDone: (() -> Unit)? = null) {
+    val done by vm.done.collectAsState()
+    LaunchedEffect(done) { if (done) onDone?.invoke() }
+
     var name by remember { mutableStateOf("") }
     var sex by remember { mutableStateOf("female") }
     var age by remember { mutableStateOf("") }

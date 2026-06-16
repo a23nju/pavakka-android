@@ -4,6 +4,7 @@ data class User(
     val id: String,
     val name: String?,
     val email: String,
+    val onboarded: Boolean? = null,
     // Auth endpoints return only id/name/email, so the rest are nullable.
     val goalCalories: Int? = null,
     val goalProtein: Int? = null,

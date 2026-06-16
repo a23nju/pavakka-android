@@ -25,10 +25,14 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
+    private val _isOnboarded = MutableStateFlow(true)
+    val isOnboarded: StateFlow<Boolean> = _isOnboarded
+
     init {
         viewModelScope.launch {
             AuthPreferences.init(application)
             _isLoggedIn.value = AuthPreferences.token != null
+            _isOnboarded.value = AuthPreferences.onboarded
         }
     }
 
@@ -39,7 +43,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val response = NetworkService.api.login(LoginRequest(email, password))
                 AuthPreferences.saveToken(getApplication(), response.token)
+                val onboarded = response.user.onboarded ?: true
+                AuthPreferences.setOnboarded(getApplication(), onboarded)
                 _currentUser.value = response.user
+                _isOnboarded.value = onboarded
                 _isLoggedIn.value = true
             } catch (e: Exception) {
                 _error.value = "Login failed. Check your credentials."
@@ -55,7 +62,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val response = NetworkService.api.signUp(SignUpRequest(name, email, password))
                 AuthPreferences.saveToken(getApplication(), response.token)
+                val onboarded = response.user.onboarded ?: false
+                AuthPreferences.setOnboarded(getApplication(), onboarded)
                 _currentUser.value = response.user
+                _isOnboarded.value = onboarded
                 _isLoggedIn.value = true
             } catch (e: Exception) {
                 _error.value = "Sign up failed. Please try again."
@@ -64,10 +74,18 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun markOnboarded() {
+        viewModelScope.launch {
+            AuthPreferences.setOnboarded(getApplication(), true)
+            _isOnboarded.value = true
+        }
+    }
+
     fun logout() {
         viewModelScope.launch {
             AuthPreferences.clearToken(getApplication())
             _currentUser.value = null
+            _isOnboarded.value = true
             _isLoggedIn.value = false
         }
     }
