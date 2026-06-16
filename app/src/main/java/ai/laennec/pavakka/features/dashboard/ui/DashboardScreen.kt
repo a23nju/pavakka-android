@@ -18,14 +18,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import ai.laennec.pavakka.core.ui.theme.BrandGreen
 import ai.laennec.pavakka.features.auth.viewmodel.AuthViewModel
 import ai.laennec.pavakka.features.dashboard.viewmodel.DashboardViewModel
+import ai.laennec.pavakka.features.diary.ui.FoodSearchDialog
+import ai.laennec.pavakka.features.diary.viewmodel.DiaryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardScreen(authViewModel: AuthViewModel, dashboardViewModel: DashboardViewModel = viewModel()) {
+fun DashboardScreen(
+    authViewModel: AuthViewModel,
+    dashboardViewModel: DashboardViewModel = viewModel(),
+    diaryViewModel: DiaryViewModel = viewModel()
+) {
     val user by authViewModel.currentUser.collectAsState()
+    val entries by diaryViewModel.entries.collectAsState()
+    var addMeal by remember { mutableStateOf<String?>(null) }
     val caloriesEaten by dashboardViewModel.caloriesEaten.collectAsState()
     val calorieGoal by dashboardViewModel.calorieGoal.collectAsState()
     val caloriesBurned by dashboardViewModel.caloriesBurned.collectAsState()
@@ -119,9 +130,53 @@ fun DashboardScreen(authViewModel: AuthViewModel, dashboardViewModel: DashboardV
                     }
                 }
             }
+
+            // Today's meals — add to Breakfast / Lunch / Dinner / Snacks right from home
+            Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Today's meals", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                    Spacer(Modifier.height(4.dp))
+                    MEALS.forEach { (label, key, icon) ->
+                        val mealEntries = entries.filter { it.meal.equals(key, ignoreCase = true) }
+                        val cals = mealEntries.sumOf { it.calories }
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 10.dp)) {
+                            Text("$icon  $label", modifier = Modifier.weight(1f), fontWeight = FontWeight.Medium)
+                            if (cals > 0) Text("$cals kcal", color = Color.Gray, fontSize = 13.sp)
+                            IconButton(onClick = { addMeal = key }, modifier = Modifier.size(32.dp)) {
+                                Icon(Icons.Filled.Add, "Add to $label", tint = BrandGreen)
+                            }
+                        }
+                        mealEntries.forEach { entry ->
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, top = 2.dp)) {
+                                Text(entry.foodName, modifier = Modifier.weight(1f), fontSize = 13.sp, color = Color.Gray)
+                                Text("${entry.calories} cal", fontSize = 12.sp, color = Color.Gray)
+                                IconButton(onClick = { diaryViewModel.deleteEntry(entry.id); dashboardViewModel.load() }, modifier = Modifier.size(28.dp)) {
+                                    Icon(Icons.Filled.Delete, "Delete", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
+
+    addMeal?.let { meal ->
+        FoodSearchDialog(
+            viewModel = diaryViewModel,
+            initialMeal = meal,
+            onDismiss = { addMeal = null },
+            onLog = { food, m -> diaryViewModel.logFood(food, m); dashboardViewModel.load(); addMeal = null }
+        )
+    }
 }
+
+private val MEALS = listOf(
+    Triple("Breakfast", "breakfast", "🌅"),
+    Triple("Lunch", "lunch", "☀️"),
+    Triple("Dinner", "dinner", "🌙"),
+    Triple("Snacks", "snack", "🍎")
+)
 
 @Composable
 fun CalorieRing(eaten: Int, goal: Int, burned: Int) {

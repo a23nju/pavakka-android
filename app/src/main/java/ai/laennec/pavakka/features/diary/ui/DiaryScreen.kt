@@ -108,9 +108,9 @@ fun DiaryScreen(diaryViewModel: DiaryViewModel = viewModel()) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun FoodSearchDialog(viewModel: DiaryViewModel, onDismiss: () -> Unit, onLog: (FoodItem, String) -> Unit) {
+fun FoodSearchDialog(viewModel: DiaryViewModel, initialMeal: String = "breakfast", onDismiss: () -> Unit, onLog: (FoodItem, String) -> Unit) {
     var query by remember { mutableStateOf("") }
-    var meal by remember { mutableStateOf("breakfast") }
+    var meal by remember { mutableStateOf(initialMeal) }
     val results by viewModel.searchResults.collectAsState()
     val recent by viewModel.recentFoods.collectAsState()
     val isSearching by viewModel.isSearching.collectAsState()
