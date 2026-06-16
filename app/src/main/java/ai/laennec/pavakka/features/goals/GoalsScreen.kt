@@ -39,6 +39,25 @@ class GoalsViewModel : ViewModel() {
             } catch (_: Exception) { _message.value = "Couldn't save." }
         }
     }
+
+    // Fetch the diary CSV and hand it to the OS share sheet.
+    fun exportDiary(context: android.content.Context) {
+        viewModelScope.launch {
+            _message.value = "Preparing export…"
+            try {
+                val csv = NetworkService.api.exportCsv().string()
+                val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                    type = "text/csv"
+                    putExtra(android.content.Intent.EXTRA_SUBJECT, "Pavakka food diary")
+                    putExtra(android.content.Intent.EXTRA_TEXT, csv)
+                }
+                context.startActivity(android.content.Intent.createChooser(intent, "Export diary").apply {
+                    addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                })
+                _message.value = null
+            } catch (_: Exception) { _message.value = "Couldn't export your diary." }
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -46,6 +65,7 @@ class GoalsViewModel : ViewModel() {
 fun GoalsScreen(vm: GoalsViewModel = viewModel()) {
     val goals by vm.goals.collectAsState()
     val message by vm.message.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     var calories by remember(goals) { mutableStateOf(goals.calories.toString()) }
     var protein by remember(goals) { mutableStateOf(goals.protein.toString()) }
@@ -70,6 +90,13 @@ fun GoalsScreen(vm: GoalsViewModel = viewModel()) {
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = BrandGreen)
             ) { Text("Save Goals") }
+
+            Divider(modifier = Modifier.padding(vertical = 8.dp))
+            OutlinedButton(
+                onClick = { vm.exportDiary(context) },
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("⬇️  Export my diary (CSV)") }
+
             message?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
     }

@@ -130,6 +130,21 @@ fun DashboardScreen(
                 }
             }
 
+            // Smart insight — contextual coaching message (matches web)
+            Surface(
+                color = BrandGreen.copy(alpha = 0.12f),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    insightText(caloriesEaten, calorieGoal, caloriesBurned),
+                    modifier = Modifier.padding(14.dp),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = BrandGreen
+                )
+            }
+
             // Macros (protein / carbs / fat) — matches web + iOS
             Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
                 Row(
@@ -210,6 +225,17 @@ fun DashboardScreen(
             onDismiss = { addMeal = null },
             onLog = { food, m -> diaryViewModel.logFood(food, m); dashboardViewModel.load(); addMeal = null }
         )
+    }
+}
+
+// Contextual coaching message based on calories remaining (mirrors the web).
+private fun insightText(eaten: Int, goal: Int, burned: Int): String {
+    val remaining = goal - eaten + burned
+    return when {
+        eaten == 0 -> "Log your first meal to get started today. 🍽️"
+        remaining < 0 -> "You're ${-remaining} kcal over — a short walk could balance it. 🚶"
+        remaining > 400 -> "You've got $remaining kcal left — plenty of room for a good meal. 😋"
+        else -> "Almost there — $remaining kcal left for today. 👌"
     }
 }
 

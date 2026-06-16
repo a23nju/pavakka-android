@@ -8,6 +8,10 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
 
 interface PavakkaApi {
+    // Diary CSV export (returns raw CSV text for sharing).
+    @GET("export")
+    suspend fun exportCsv(): okhttp3.ResponseBody
+
     @POST("auth/login")
     suspend fun login(@Body request: LoginRequest): LoginResponse
 
