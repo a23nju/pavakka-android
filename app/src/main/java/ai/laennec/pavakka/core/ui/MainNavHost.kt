@@ -78,7 +78,15 @@ fun MainNavHost(authViewModel: AuthViewModel) {
         }
     ) { padding ->
         NavHost(navController = navController, startDestination = Screen.Dashboard.route) {
-            composable(Screen.Dashboard.route) { DashboardScreen(authViewModel) }
+            composable(Screen.Dashboard.route) {
+                DashboardScreen(authViewModel, onNavigate = { route ->
+                    navController.navigate(route) {
+                        popUpTo(navController.graph.startDestinationId) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                })
+            }
             composable(Screen.Diary.route) { DiaryScreen() }
             composable(Screen.Progress.route) { ProgressScreen() }
             composable(Screen.Workout.route) { WorkoutScreen() }

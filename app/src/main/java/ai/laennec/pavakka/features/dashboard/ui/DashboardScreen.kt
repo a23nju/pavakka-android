@@ -34,6 +34,7 @@ import ai.laennec.pavakka.features.diary.viewmodel.DiaryViewModel
 @Composable
 fun DashboardScreen(
     authViewModel: AuthViewModel,
+    onNavigate: (String) -> Unit = {},
     dashboardViewModel: DashboardViewModel = viewModel(),
     diaryViewModel: DiaryViewModel = viewModel()
 ) {
@@ -143,6 +144,17 @@ fun DashboardScreen(
                     fontWeight = FontWeight.Medium,
                     color = BrandGreen
                 )
+            }
+
+            // Quick actions — shortcuts to the most-used features (matches web)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                QuickAction("🍽️", "Add food", Modifier.weight(1f)) { addMeal = "breakfast" }
+                QuickAction("⏱️", "Workout", Modifier.weight(1f)) { onNavigate("workout") }
+                QuickAction("⚖️", "Weigh in", Modifier.weight(1f)) { onNavigate("progress") }
+                QuickAction("📊", "Report", Modifier.weight(1f)) { onNavigate("report") }
             }
 
             // Macros (protein / carbs / fat) — matches web + iOS
@@ -267,6 +279,20 @@ fun CalorieStat(label: String, value: Int) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text("$value", fontWeight = FontWeight.SemiBold)
         Text(label, fontSize = 12.sp, color = Color.Gray)
+    }
+}
+
+@Composable
+fun QuickAction(emoji: String, label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Card(modifier = modifier.clickable { onClick() }, shape = RoundedCornerShape(16.dp)) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(emoji, fontSize = 22.sp)
+            Text(label, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+        }
     }
 }
 
