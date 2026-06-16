@@ -19,6 +19,7 @@ fun MoreScreen(authViewModel: AuthViewModel, onNavigate: (String) -> Unit) {
             row("Fasting", Icons.Filled.Refresh) { onNavigate("fasting") }
             row("Goals", Icons.Filled.Star) { onNavigate("goals") }
             row("My Foods", Icons.Filled.ShoppingCart) { onNavigate("foods") }
+            rowEmoji("Reminders", "🔔") { onNavigate("reminders") }
             row("Set Up Profile", Icons.Filled.Person) { onNavigate("onboarding") }
             Divider()
             rowEmoji("AI Coach", "💬") { onNavigate("coach") }

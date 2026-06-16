@@ -95,6 +95,7 @@ fun MainNavHost(authViewModel: AuthViewModel) {
             composable("coach") { CoachScreen() }
             composable("achievements") { AchievementsScreen() }
             composable("onboarding") { OnboardingScreen() }
+            composable("reminders") { ai.laennec.pavakka.features.reminders.RemindersScreen() }
             composable("exerciseAi") { ExerciseAIScreen() }
         }
     }

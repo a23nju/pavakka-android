@@ -89,8 +89,17 @@ fun FastingScreen(fastingViewModel: FastingViewModel = viewModel()) {
             }
 
             // Start/Stop button
+            val ctx = androidx.compose.ui.platform.LocalContext.current
             Button(
-                onClick = { if (isRunning) fastingViewModel.stop() else fastingViewModel.start() },
+                onClick = {
+                    if (isRunning) {
+                        fastingViewModel.stop()
+                        ai.laennec.pavakka.core.notifications.Reminders.cancelFastComplete(ctx)
+                    } else {
+                        fastingViewModel.start()
+                        ai.laennec.pavakka.core.notifications.Reminders.scheduleFastComplete(ctx, goalHours)
+                    }
+                },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = if (isRunning) MaterialTheme.colorScheme.error else BrandGreen)
