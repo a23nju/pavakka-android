@@ -21,10 +21,10 @@ import ai.laennec.pavakka.features.fasting.viewmodel.FastingViewModel
 fun FastingScreen(fastingViewModel: FastingViewModel = viewModel()) {
     val isRunning by fastingViewModel.isRunning.collectAsState()
     val elapsedSeconds by fastingViewModel.elapsedSeconds.collectAsState()
-    val selectedProtocol by fastingViewModel.selectedProtocol.collectAsState()
-    val protocols = listOf("16:8", "18:6", "20:4", "OMAD")
+    val goalHours by fastingViewModel.targetHours.collectAsState()
+    // Preset protocols (label -> fasting hours); a "Custom" stepper covers everything else.
+    val presets = listOf("16:8" to 16, "18:6" to 18, "20:4" to 20, "OMAD" to 23)
 
-    val goalHours = when (selectedProtocol) { "18:6" -> 18; "20:4" -> 20; "OMAD" -> 23; else -> 16 }
     val goalSeconds = goalHours * 3600
     val progress = (elapsedSeconds.toFloat() / goalSeconds).coerceIn(0f, 1f)
 
@@ -36,19 +36,42 @@ fun FastingScreen(fastingViewModel: FastingViewModel = viewModel()) {
         Column(
             modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // Protocol picker
+            // Preset picker
             Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
                 Row(modifier = Modifier.padding(8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    protocols.forEach { p ->
+                    presets.forEach { (label, h) ->
                         FilterChip(
-                            selected = selectedProtocol == p,
-                            onClick = { fastingViewModel.selectProtocol(p) },
-                            label = { Text(p) },
+                            selected = goalHours == h,
+                            onClick = { fastingViewModel.setTargetHours(h) },
+                            label = { Text(label) },
+                            enabled = !isRunning,
                             modifier = Modifier.weight(1f),
                             colors = FilterChipDefaults.filterChipColors(selectedContainerColor = BrandGreen)
                         )
+                    }
+                }
+            }
+
+            // Custom target — adjust to any number of hours
+            Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Custom goal", fontWeight = FontWeight.SemiBold)
+                        Text("Set your own fasting window", fontSize = 12.sp,
+                            color = androidx.compose.ui.graphics.Color.Gray)
+                    }
+                    IconButton(onClick = { fastingViewModel.setTargetHours(goalHours - 1) }, enabled = !isRunning) {
+                        Text("−", fontSize = 24.sp, color = BrandGreen)
+                    }
+                    Text("${goalHours}h", fontWeight = FontWeight.Bold, fontSize = 18.sp,
+                        modifier = Modifier.widthIn(min = 44.dp), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                    IconButton(onClick = { fastingViewModel.setTargetHours(goalHours + 1) }, enabled = !isRunning) {
+                        Text("+", fontSize = 22.sp, color = BrandGreen)
                     }
                 }
             }

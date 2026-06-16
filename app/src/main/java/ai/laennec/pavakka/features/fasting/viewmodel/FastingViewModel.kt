@@ -20,18 +20,15 @@ class FastingViewModel : ViewModel() {
     private val _elapsedSeconds = MutableStateFlow(0L)
     val elapsedSeconds: StateFlow<Long> = _elapsedSeconds
 
-    private val _selectedProtocol = MutableStateFlow("16:8")
-    val selectedProtocol: StateFlow<String> = _selectedProtocol
+    // Target fast length in hours — the single source of truth (any value 1–48).
+    private val _targetHours = MutableStateFlow(16)
+    val targetHours: StateFlow<Int> = _targetHours
 
     private var timerJob: Job? = null
     private var startMillis: Long = 0L
 
     private val iso = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
         timeZone = TimeZone.getTimeZone("UTC")
-    }
-
-    private fun targetHours(): Int = when (_selectedProtocol.value) {
-        "18:6" -> 18; "20:4" -> 20; "OMAD" -> 23; else -> 16
     }
 
     init { load() }
@@ -43,7 +40,7 @@ class FastingViewModel : ViewModel() {
                 val active = state.active
                 if (active != null) {
                     startMillis = parseMillis(active.startedAt)
-                    _selectedProtocol.value = hoursToProtocol(active.targetHours)
+                    _targetHours.value = active.targetHours
                     _isRunning.value = true
                     runTimer()
                 } else {
@@ -57,7 +54,7 @@ class FastingViewModel : ViewModel() {
     fun start() {
         viewModelScope.launch {
             try {
-                val s = NetworkService.api.startFast(FastingRequest(targetHours()))
+                val s = NetworkService.api.startFast(FastingRequest(_targetHours.value))
                 startMillis = parseMillis(s.startedAt)
                 _isRunning.value = true
                 runTimer()
@@ -74,8 +71,9 @@ class FastingViewModel : ViewModel() {
         }
     }
 
-    fun selectProtocol(protocol: String) {
-        if (!_isRunning.value) _selectedProtocol.value = protocol
+    // Set a target in hours (clamped 1–48); ignored while a fast is running.
+    fun setTargetHours(hours: Int) {
+        if (!_isRunning.value) _targetHours.value = hours.coerceIn(1, 48)
     }
 
     private fun runTimer() {
@@ -90,8 +88,4 @@ class FastingViewModel : ViewModel() {
 
     private fun parseMillis(s: String): Long = try { iso.parse(s)?.time ?: System.currentTimeMillis() }
         catch (_: Exception) { System.currentTimeMillis() }
-
-    private fun hoursToProtocol(h: Int): String = when (h) {
-        18 -> "18:6"; 20 -> "20:4"; 23 -> "OMAD"; else -> "16:8"
-    }
 }
